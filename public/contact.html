@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contact — Recallio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600&display=swap" rel="stylesheet">
+  <style>
+:root { --ink:#111827; --muted:#4b5563; --indigo:#4f46e5; --violet:#8b5cf6; --bg:#ffffff; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
+body{font-family:'Open Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; line-height:1.9}
+.container{max-width:920px;margin:0 auto;padding:40px 24px 64px}
+header.hero{background:linear-gradient(90deg,var(--indigo),var(--violet));color:#fff;padding:72px 0 88px;margin:0 0 24px}
+h1,h2{font-family:'Poppins', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial}
+h1{font-size:42px;margin:0 0 10px}
+h2{font-size:24px;margin:28px 0 10px;color:#4338ca}
+p,li{font-size:16px;color:var(--muted)}
+a{color:var(--indigo);text-decoration:underline}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:12px 16px;text-decoration:none}
+.btn.primary{background:#fff;color:#111827;border:1px solid #e5e7eb}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px}
+.card{border:1px solid #e5e7eb;border-radius:16px;padding:18px}
+small.kicker{opacity:.95}
+footer{margin-top:40px;font-size:14px;color:#6b7280}
+</style>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://recallio.dev/contact">
+  <meta name="description" content="Get in touch with Recallio — sales, support, and security.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Recallio Contact",
+    "url": "https://recallio.dev/contact",
+    "about": "Sales, support, and security contacts for Recallio",
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "contactType": "sales",
+        "email": "sales@recallio.dev",
+        "availableLanguage": "en"
+      },
+      {
+        "@type": "ContactPoint",
+        "contactType": "technical support",
+        "email": "support@recallio.dev",
+        "availableLanguage": "en"
+      },
+      {
+        "@type": "ContactPoint",
+        "contactType": "security",
+        "email": "security@recallio.dev",
+        "availableLanguage": "en"
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <h1>Contact Recallio</h1>
+      <p class="kicker">Questions, demos, or security reports — we’re here to help.</p>
+      <div style="margin-top:16px">
+        <a class="btn ghost" href="mailto:sales@recallio.dev" onclick="window.plausible && plausible('contact_click_sales')">Email Sales</a>
+        <a class="btn ghost" href="https://calendly.com/your-link" onclick="window.plausible && plausible('demo_click_contact')">Book a demo</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="cards">
+      <div class="card">
+        <h2>Sales</h2>
+        <p>Email <a href="mailto:sales@recallio.dev" onclick="window.plausible && plausible('contact_click_sales_email')">sales@recallio.dev</a></p>
+        <p><a class="btn primary" href="https://calendly.com/your-link" onclick="window.plausible && plausible('demo_click_contact')">Schedule a demo</a></p>
+        <small>Replace <code>https://calendly.com/your-link</code> with your actual booking link.</small>
+      </div>
+      <div class="card">
+        <h2>Support</h2>
+        <p>Email <a href="mailto:support@recallio.dev" onclick="window.plausible && plausible('contact_click_support_email')">support@recallio.dev</a></p>
+        <p>We typically respond within one business day.</p>
+      </div>
+      <div class="card">
+        <h2>Security</h2>
+        <p>Report vulnerabilities to <a href="mailto:security@recallio.dev" onclick="window.plausible && plausible('contact_click_security_email')">security@recallio.dev</a>.</p>
+        <p>See our <a href="/.well-known/security.txt">security.txt</a> for details.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="container">© Recallio</footer>
+</body>
+</html>

@@ -1,0 +1,3 @@
+Contact: mailto:security@recallio.dev
+Policy: https://recallio.dev/Recallio-Security-Brief.pdf
+Preferred-Languages: en
