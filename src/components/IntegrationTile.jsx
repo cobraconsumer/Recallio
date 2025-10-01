@@ -3,8 +3,8 @@ export default function IntegrationTile({
     name,
     description,
     status = "disconnected",
-    disabled = true,
-    onConnect,
+    href,            // <— NEW
+    disabled = false // default false now
   }) {
     const connected = status === "connected";
   
@@ -27,15 +27,22 @@ export default function IntegrationTile({
         <p className="mt-2 text-sm text-gray-600">{description}</p>
   
         <div className="mt-4">
-          <button
-            type="button"
-            className="rounded-xl px-4 py-2 border bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={onConnect}
-            disabled={disabled}
-            aria-disabled={disabled}
-          >
-            {connected ? "Manage" : "Connect"}
-          </button>
+          {href ? (
+            <a
+              href={href}
+              className="inline-block rounded-xl px-4 py-2 border bg-black text-white hover:opacity-90"
+            >
+              {connected ? "Manage" : "Connect"}
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="rounded-xl px-4 py-2 border bg-black text-white disabled:opacity-50"
+              disabled={disabled}
+            >
+              {connected ? "Manage" : "Connect"}
+            </button>
+          )}
         </div>
       </div>
     );
