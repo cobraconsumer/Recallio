@@ -1,25 +1,41 @@
-// src/pages/Integrations.jsx
+import { useEffect, useState } from "react";
 import IntegrationTile from "../components/IntegrationTile.jsx";
 
 export default function Integrations() {
+  const [connected, setConnected] = useState({});
+
+  useEffect(() => {
+    fetch("/api/connectors")
+      .then((r) => r.json())
+      .then((rows) => {
+        const map = {};
+        rows.forEach((r) => { map[r.provider] = true; });
+        setConnected(map);
+      })
+      .catch(() => {});
+  }, []);
+
   const tiles = [
     {
       key: "slack",
       name: "Slack",
       description:
         "Ingest messages from channels you choose. DMs optional. Read-only.",
+      href: "/api/auth/slack",
     },
     {
       key: "gmail",
       name: "Gmail",
       description:
         "Index subject, snippet, and body from labeled threads. Read-only.",
+      href: "/api/auth/gmail",
     },
     {
       key: "zoom",
       name: "Zoom",
       description:
         "Pull meeting metadata and transcripts for meetings you host. Read-only.",
+      href: "/api/auth/zoom",
     },
   ];
 
@@ -40,27 +56,13 @@ export default function Integrations() {
               key={t.key}
               name={t.name}
               description={t.description}
-              status="disconnected"
-              disabled
-              onConnect={() => {}}
+              href={t.href}
+              status={connected[t.key] ? "connected" : "disconnected"}
             />
           ))}
         </div>
-
-        <section className="mt-10 rounded-2xl border bg-white/70 p-6">
-          <h2 className="font-semibold">Import progress</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            We’ll show connector progress here after you connect.
-          </p>
-        </section>
-
-        <section className="mt-8 text-xs text-gray-500 leading-relaxed">
-          By connecting you grant <strong>read-only</strong> access. Recallio
-          stores text, timestamps, authors, and minimal metadata. You can delete
-          sources anytime. Team-visible memories only appear for content from
-          shared channels/meetings.
-        </section>
       </div>
     </main>
   );
 }
+
