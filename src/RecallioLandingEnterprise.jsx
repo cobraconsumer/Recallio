@@ -3,576 +3,465 @@ import React from "react";
 import { motion } from "framer-motion";
 import {
   ShieldCheck,
-  Calendar,
-  Mail,
-  Video,
+  Database,
   Workflow,
-  Lock,
-  Sparkles,
+  Rocket,
   ChevronRight,
   CheckCircle2,
+  Sparkles,
+  Building2,
+  Lock,
+  PlugZap,
 } from "lucide-react";
 
 /**
- * Recallio — Landing Page (Brand Refresh: "Memory that acts")
- * - Hero: new headline/subhead, warm-agency color accents
- * - Palette: indigo/blue core + soft amber for "action"
- * - Subtle animated gradient blobs for "living memory" vibe
- * - Partner logos: 30% smaller base + hover enlarge (no grayscale)
- * - Body copy remains clean black
- * - CTAs wired with optional Plausible-safe tracking
- *
- * NOTE:
- * - Put your logo at /public/Recallio.svg (already in your project)
- * - If you have partner logo assets, drop them in /public/logos and update URLs below
+ * Recallio — Enterprise Landing Page
+ * - Gradient branding, clean black body text
+ * - Integrations logos: ~30% smaller + hover enlarge (no grayscale)
+ * - CTAs wired to LINKS + Plausible-safe click tracking
  */
 
-const LINKS = {
-  primary: "/signup",
-  secondary: "/demo",
-  docs: "/docs",
-};
-
+/* ---------- Links (edit me) ---------- */
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
-// Optional analytics-safe click tracking
-function track(name) {
-  try {
-    if (window.plausible) window.plausible(name);
-  } catch {}
+const LINKS = {
+  demo: "https://your-typeform-or-hubspot-form.com", // TODO: replace with real demo form URL
+  onePager: "/Recallio-OnePager.pdf", // ensure the PDF exists in /public
+  contact: "mailto:sales@recallio.com",
+};
+
+/* ---------- Accent + motion ---------- */
+const ACCENT = {
+  text: "text-indigo-600",
+  bg: "bg-indigo-600",
+  ring: "ring-indigo-600/20",
+  hover: "hover:bg-indigo-700",
+  gradient: "from-indigo-600 via-indigo-500 to-violet-500",
+  gradientText:
+    "bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-500 bg-clip-text text-transparent",
+};
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+};
+
+/* helper for analytics-safe click */
+const track =
+  (name) =>
+  () => {
+    try {
+      window.plausible && window.plausible(name);
+    } catch {}
+  };
+
+/* ---------- Header ---------- */
+function Header() {
+  return (
+    <header className="sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-zinc-100">
+      <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src="/Recallio.svg" alt="Recallio" className="h-9 w-auto" />
+          <span className="sr-only">Recallio</span>
+        </div>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-900">
+          <a href="#features" className="hover:opacity-70 transition">
+            Features
+          </a>
+          <a href="#workflow" className="hover:opacity-70 transition">
+            Workflow
+          </a>
+          <a href="#integrations" className="hover:opacity-70 transition">
+            Integrations
+          </a>
+          <a href="#security" className="hover:opacity-70 transition">
+            Security
+          </a>
+        </nav>
+        <div className="flex items-center gap-3">
+          <a
+            href={LINKS.contact}
+            className="hidden sm:inline-flex items-center rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-900 shadow-sm hover:bg-zinc-50 transition"
+            onClick={track("contact_click")}
+          >
+            Contact Sales
+          </a>
+          <a
+            href={LINKS.demo}
+            target="_blank"
+            rel="noopener"
+            className={`inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm ${ACCENT.bg} ${ACCENT.hover} transition`}
+            onClick={track("demo_click_header")}
+          >
+            Get a Demo
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </a>
+        </div>
+      </div>
+      {/* Gradient hairline under header */}
+      <div className={`h-[2px] w-full bg-gradient-to-r ${ACCENT.gradient}`} />
+    </header>
+  );
 }
 
-const partnerLogos = [
-  { name: "Gmail", src: "/logos/gmail.png" },
-  { name: "Calendar", src: "/logos/google-calendar.png" },
-  { name: "Slack", src: "/logos/slack.png" },
-  { name: "Zoom", src: "/logos/zoom.png" },
-  { name: "Drive", src: "/logos/google-drive.png" },
-  { name: "Notion", src: "/logos/notion.png" },
-];
-
-const Blob = ({ style, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 0.6, scale: 1 }}
-    transition={{ duration: 1.4, delay }}
-    style={{
-      position: "absolute",
-      filter: "blur(60px)",
-      borderRadius: "999px",
-      pointerEvents: "none",
-      ...style,
-    }}
-  />
-);
-
-export default function RecallioLandingEnterprise() {
+/* ---------- Hero ---------- */
+function Hero() {
   return (
-    <div style={{ background: "#0b1020", minHeight: "100vh" }}>
-      {/* Top bar */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 20,
-          backdropFilter: "saturate(140%) blur(8px)",
-          background:
-            "linear-gradient(to right, rgba(11,16,32,0.75), rgba(11,16,32,0.35))",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img
-              src="/Recallio.svg"
-              alt="Recallio"
-              style={{ height: 28, display: "block" }}
-            />
-            <span
-              style={{
-                color: "rgba(255,255,255,0.7)",
-                fontSize: 13,
-                letterSpacing: 0.4,
-              }}
-            >
-              memory that acts
-            </span>
-          </div>
+    <section className="relative overflow-hidden">
+      {/* Soft gradient blobs */}
+      <div
+        className={`pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-20 bg-gradient-to-br ${ACCENT.gradient}`}
+      />
+      <div
+        className={`pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full blur-3xl opacity-15 bg-gradient-to-tr ${ACCENT.gradient}`}
+      />
 
-          <nav style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <a
-              href={LINKS.docs}
-              style={{
-                color: "rgba(255,255,255,0.82)",
-                textDecoration: "none",
-                fontSize: 14,
-              }}
-            >
-              Docs
-            </a>
-            <a
-              href={LINKS.secondary}
-              onClick={() => track("demo_click")}
-              style={{
-                color: "#0b1020",
-                background:
-                  "linear-gradient(90deg, #F59E0B 0%, #FDBA74 100%)", // amber -> soft orange
-                padding: "10px 14px",
-                borderRadius: 10,
-                fontWeight: 600,
-                fontSize: 14,
-              }}
-            >
-              Watch demo
-            </a>
-            <a
-              href={LINKS.primary}
-              onClick={() => track("signup_click")}
-              style={{
-                color: "#0b1020",
-                background:
-                  "linear-gradient(90deg, #60A5FA 0%, #818CF8 100%)", // blue/indigo
-                padding: "10px 16px",
-                borderRadius: 10,
-                fontWeight: 700,
-                fontSize: 14,
-              }}
-            >
-              Get started
-            </a>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        {/* Animated blobs */}
-        <Blob
-          delay={0.1}
-          style={{
-            width: 360,
-            height: 360,
-            left: -80,
-            top: -40,
-            background:
-              "radial-gradient(closest-side, rgba(99,102,241,0.55), rgba(99,102,241,0))",
-          }}
-        />
-        <Blob
-          delay={0.3}
-          style={{
-            width: 420,
-            height: 420,
-            right: -120,
-            top: 60,
-            background:
-              "radial-gradient(closest-side, rgba(96,165,250,0.45), rgba(96,165,250,0))",
-          }}
-        />
-        <Blob
-          delay={0.6}
-          style={{
-            width: 300,
-            height: 300,
-            left: "45%",
-            bottom: -80,
-            background:
-              "radial-gradient(closest-side, rgba(245,158,11,0.35), rgba(245,158,11,0))",
-          }}
-        />
-
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "80px 20px 40px",
-            display: "grid",
-            gridTemplateColumns: "1.05fr 0.95fr",
-            gap: 24,
-          }}
+      <div className="mx-auto max-w-7xl px-6 pt-16 pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"
         >
           <div>
-            <motion.h1
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              style={{
-                fontSize: 56,
-                lineHeight: 1.06,
-                margin: 0,
-                background:
-                  "linear-gradient(180deg, #FFFFFF 0%, #C7D2FE 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontWeight: 800,
-                letterSpacing: -0.5,
-              }}
-            >
-              Memory that acts.
-            </motion.h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-900">
+              <Sparkles className={`${ACCENT.text} h-4 w-4`} />
+              <span className={`${ACCENT.text}`}>Enterprise AI Memory</span>
+            </div>
+            <h1 className={`mt-5 text-4xl md:text-5xl font-bold tracking-tight text-zinc-900`}>
+              Turn scattered knowledge into{" "}
+              <span className={`${ACCENT.gradientText}`}>instant answers</span>
+            </h1>
+            <p className="mt-5 text-base leading-7 text-zinc-900/90 max-w-xl">
+              Recallio captures your team’s files, meetings, and context—then answers questions
+              with citations. Secure by design, deployable in days.
+            </p>
 
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.05 }}
-              style={{
-                marginTop: 16,
-                fontSize: 18,
-                lineHeight: 1.6,
-                color: "rgba(255,255,255,0.86)",
-                maxWidth: 620,
-              }}
-            >
-              Recallio remembers what matters across your emails, notes, and
-              conversations—and takes care of what’s next. Ask naturally:
-              <span style={{ color: "#FDBA74", fontWeight: 600 }}>
-                {" "}
-                “Add that invite to my calendar and set a Zoom for Friday.”
-              </span>{" "}
-              Consider it done.
-            </motion.p>
-
-            <div style={{ display: "flex", gap: 12, marginTop: 22 }}>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <a
-                href={LINKS.primary}
-                onClick={() => track("signup_click_hero")}
-                style={{
-                  color: "#0b1020",
-                  background:
-                    "linear-gradient(90deg, #60A5FA 0%, #818CF8 100%)",
-                  padding: "14px 18px",
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+                href={LINKS.demo}
+                target="_blank"
+                rel="noopener"
+                className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r ${ACCENT.gradient} shadow-sm transition hover:opacity-95`}
+                onClick={track("demo_click_hero")}
               >
-                Get started
-                <ChevronRight size={18} />
+                Book a Live Demo
               </a>
               <a
-                href={LINKS.secondary}
-                onClick={() => track("demo_click_hero")}
-                style={{
-                  color: "#0b1020",
-                  background:
-                    "linear-gradient(90deg, #F59E0B 0%, #FDBA74 100%)",
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+                href="#security"
+                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-900 ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition"
               >
-                See it act
-                <Sparkles size={18} />
+                Read Security Brief
               </a>
             </div>
+    <div className="mt-3 flex flex-col sm:flex-row gap-3">
+  <a
+    href={`${API}/api/auth/gmail`}
+    className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-500 shadow-sm transition hover:opacity-95"
+  >
+    Continue with Google
+  </a>
 
-            {/* Partner logos row */}
-            <div
-              style={{
-                marginTop: 28,
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(110px, 1fr))",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              {partnerLogos.map((logo) => (
-                <motion.div
-                  key={logo.name}
-                  whileHover={{ scale: 1.15 }}
-                  transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 12,
-                    padding: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transform: "scale(0.7)", // ~30% smaller base
-                  }}
-                  title={logo.name}
-                >
-                  {logo.src ? (
-                    <img
-                      src={logo.src}
-                      alt={logo.name}
-                      style={{
-                        maxHeight: 24,
-                        objectFit: "contain",
-                        opacity: 0.9,
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}
-                    >
-                      {logo.name}
-                    </span>
-                  )}
-                </motion.div>
-              ))}
+  <a
+    href={`${API}/api/auth/gmail/connect`}
+    className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-900 ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition"
+  >
+    Connect Gmail
+  </a>
+</div>
+
+            <div className="mt-6 flex items-center gap-6 text-xs text-zinc-600">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className={`${ACCENT.text} h-4 w-4`} /> SOC 2 in progress
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className={`${ACCENT.text} h-4 w-4`} /> SSO / SAML
+              </div>
+              <div className="flex items-center gap-2">
+                <Building2 className={`${ACCENT.text} h-4 w-4`} /> On-prem & VPC
+              </div>
             </div>
           </div>
 
-          {/* Right card: quick explainer */}
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(30,41,86,0.55), rgba(30,41,86,0.25))",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 16,
-              padding: 18,
-              color: "#0b1020",
-            }}
-          >
-            <div
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(96,165,250,0.22), rgba(129,140,248,0.22))",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 12,
-                padding: 14,
-              }}
+          {/* Device Mock */}
+          <motion.div variants={container} initial="hidden" animate="show" className="relative">
+            <motion.div
+              variants={item}
+              className="relative mx-auto w-full max-w-xl rounded-3xl border border-zinc-200 bg-white shadow-2xl"
             >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: 10,
-                  alignItems: "start",
-                }}
-              >
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(180deg, #60A5FA, #818CF8)",
-                    borderRadius: 10,
-                    padding: 10,
-                  }}
-                >
-                  <Workflow color="#0b1020" size={20} />
+              <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <img src="/Recallio.svg" alt="Recallio" className="h-7 w-auto" />
+                  <span className={`text-sm font-semibold ${ACCENT.text}`}>Recallio • Workspace</span>
                 </div>
-                <div>
-                  <h3
-                    style={{
-                      margin: "2px 0 4px",
-                      color: "white",
-                      fontSize: 16,
-                      fontWeight: 800,
-                      letterSpacing: 0.2,
-                    }}
-                  >
-                    How Recallio acts
-                  </h3>
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: 18,
-                      color: "rgba(255,255,255,0.9)",
-                      fontSize: 14.5,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    <li>Understands requests in plain language</li>
-                    <li>Finds the right email, note, or message</li>
-                    <li>Performs the next step for you</li>
+                <div className="text-xs text-zinc-500">v2.1</div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-5">
+                <aside className="hidden md:block col-span-2 border-r border-zinc-100 p-4">
+                  <div className="text-xs font-semibold text-zinc-700 mb-3">Collections</div>
+                  <ul className="space-y-2">
+                    {["Design Specs", "Client Calls", "Engineering", "Legal", "Research", "All Docs"].map(
+                      (t) => (
+                        <li key={t} className="flex items-center gap-2 text-sm text-zinc-900">
+                          <div
+                            className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${ACCENT.gradient}`}
+                          ></div>
+                          {t}
+                        </li>
+                      )
+                    )}
                   </ul>
+                </aside>
+                <div className="col-span-3 p-5">
+                  <div className="rounded-2xl border border-zinc-200 p-4">
+                    <div className="text-xs font-medium text-zinc-500">Ask your workspace</div>
+                    <div className="mt-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-900/90">
+                      “Summarize key decisions from last week’s design review and link sources.”
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {[
+                        {
+                          title: "Three design decisions & owners",
+                          pills: ["Typography", "Color", "Motion"],
+                          body:
+                            "Harmonized type ramp to 12/16/20/28, accent palette = Indigo 600, micro-interactions standardized across buttons.",
+                        },
+                        {
+                          title: "Linked sources",
+                          pills: ["Figma", "GDrive", "Meet"],
+                          body: "Cites FigJam board + PRD v3 + 2 meeting transcripts.",
+                        },
+                      ].map((card, idx) => (
+                        <div key={idx} className="rounded-xl border border-zinc-200 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h4 className={`text-sm font-semibold ${ACCENT.text}`}>{card.title}</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {card.pills.map((p) => (
+                                <span
+                                  key={p}
+                                  className={`inline-flex items-center rounded-full border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-900 ${ACCENT.ring}`}
+                                >
+                                  {p}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="mt-2 text-sm text-zinc-900/90">{card.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                <FeaturePill icon={<Calendar size={16} />} text="Add to calendar" />
-                <FeaturePill icon={<Video size={16} />} text="Schedule Zoom" />
-                <FeaturePill icon={<Mail size={16} />} text="Draft follow-up" />
-                <FeaturePill icon={<ShieldCheck size={16} />} text="Audit trail" />
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: 12,
-                padding: 14,
-                background:
-                  "linear-gradient(180deg, rgba(245,158,11,0.18), rgba(253,186,116,0.12))",
-                border: "1px solid rgba(253,186,116,0.35)",
-                borderRadius: 12,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Lock size={18} color="#F59E0B" />
-                <strong style={{ color: "white", fontSize: 14.5 }}>
-                  Built for trust
-                </strong>
-              </div>
-              <p
-                style={{
-                  margin: "6px 0 0",
-                  color: "rgba(255,255,255,0.9)",
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                }}
-              >
-                Least-privilege OAuth scopes, encrypted tokens, and a clear
-                action log. Your data stays yours.
-              </p>
-            </div>
+            </motion.div>
           </motion.div>
-        </div>
-      </section>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
-      {/* Benefits */}
-      <section
-        style={{
-          background: "white",
-          color: "#0b1020",
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "56px 20px 80px",
-          }}
-        >
+/* ---------- Features ---------- */
+function Features() {
+  const features = [
+    {
+      icon: <Workflow className={`${ACCENT.text} h-5 w-5`} />,
+      title: "Answers with citations",
+      desc: "Every response links to the exact lines in your docs and calls—so legal and leadership can trust it.",
+    },
+    {
+      icon: <Database className={`${ACCENT.text} h-5 w-5`} />,
+      title: "Bring your data",
+      desc: "Ingest Google Drive, Notion, Confluence, Figma, Slack, Meet transcripts, and more with granular controls.",
+    },
+    {
+      icon: <ShieldCheck className={`${ACCENT.text} h-5 w-5`} />,
+      title: "Enterprise-grade security",
+      desc: "SSO/SAML, SCIM, audit logs, per-space permissions, on-prem and VPC options. SOC 2 program underway.",
+    },
+  ];
+  return (
+    <section id="features" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {features.map((f) => (
+          <div key={f.title} className="rounded-2xl border border-zinc-200 p-6 shadow-sm bg-white">
+            <div className="flex items-center gap-3">
+              {f.icon}
+              <h3 className={`text-base font-semibold ${ACCENT.text}`}>{f.title}</h3>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-zinc-900/90">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Workflow ---------- */
+function WorkflowSection() {
+  const steps = [
+    { title: "Connect", desc: "Select sources and spaces—no code onboarding.", icon: PlugZap },
+    { title: "Index", desc: "Recallio builds a secure memory graph of your org.", icon: Database },
+    { title: "Ask", desc: "Get precise answers with citations and owners.", icon: Workflow },
+    { title: "Ship", desc: "Decide faster. Reduce meetings. Ship more.", icon: Rocket },
+  ];
+  return (
+    <section id="workflow" className="mx-auto max-w-7xl px-6 py-10">
+      <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <h2 className={`text-xl font-bold ${ACCENT.text}`}>How teams use Recallio</h2>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+          {steps.map((s) => (
+            <div key={s.title} className="relative rounded-2xl border border-zinc-200 p-5">
+              <s.icon className={`${ACCENT.text} h-5 w-5`} />
+              <h3 className={`mt-3 text-sm font-semibold ${ACCENT.text}`}>{s.title}</h3>
+              <p className="mt-1 text-sm text-zinc-900/90">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Integrations (logos smaller + hover enlarge) ---------- */
+function Integrations() {
+  // Files must exist in /public (case-sensitive)
+  const logos = [
+    { name: "Figma", src: "/Figma-logo.svg" },
+    { name: "Google Drive", src: "/google-drive.svg" },
+    { name: "Google Meet", src: "/google-meet.svg" },
+    { name: "Notion", src: "/Notion-logo.svg" },
+    { name: "Confluence", src: "/confluence-1.svg" },
+  ];
+
+  return (
+    <section id="integrations" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="text-center">
+        <h2 className={`text-xl font-bold ${ACCENT.text}`}>Works with your stack</h2>
+        <p className="mt-2 text-sm text-zinc-900/90">Plug in your tools and keep permissions intact.</p>
+      </div>
+
+      <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {logos.map(({ name, src }) => (
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: 18,
-            }}
+            key={name}
+            className="group relative rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm overflow-hidden flex items-center justify-center"
           >
-            <Benefit
-              icon={<CheckCircle2 color="#1f2937" />}
-              title="Remember everything"
-              body="Capture notes, emails, and moments across your tools. Recall them instantly by asking naturally."
+            {/* subtle gradient sweep on hover, matches site accent */}
+            <div
+              className={`pointer-events-none absolute inset-x-0 -bottom-8 h-16 opacity-0 group-hover:opacity-20 transition bg-gradient-to-r ${ACCENT.gradient}`}
             />
-            <Benefit
-              icon={<Sparkles color="#1f2937" />}
-              title="Recall context"
-              body="Ask for 'the event invite from last week'—Recallio understands people, time, and intent."
-            />
-            <Benefit
-              icon={<Workflow color="#1f2937" />}
-              title="Act automatically"
-              body="Turn memory into momentum. Add to calendar, schedule a Zoom, or draft a reply—hands-off."
-            />
-            <Benefit
-              icon={<ShieldCheck color="#1f2937" />}
-              title="Trust by design"
-              body="Private by default with clear controls and an action log you can review anytime."
+            <img
+              src={src}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              // h-10 → ~30% smaller ≈ h-7; md:h-12 → md:h-8
+              className="h-7 md:h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-110"
             />
           </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer
-        style={{
-          background: "#0b1020",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "26px 20px 46px",
-            color: "rgba(255,255,255,0.78)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <span style={{ fontSize: 13 }}>© {new Date().getFullYear()} Recallio</span>
-          <span style={{ fontSize: 13, opacity: 0.85 }}>
-            Recallio — memory that acts
-          </span>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-function FeaturePill({ icon, text }) {
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "8px 10px",
-        borderRadius: 999,
-        background: "rgba(255,255,255,0.9)",
-        border: "1px solid rgba(0,0,0,0.06)",
-        fontSize: 12.5,
-        fontWeight: 600,
-      }}
-    >
-      {icon}
-      <span>{text}</span>
-    </div>
-  );
-}
-
-function Benefit({ icon, title, body }) {
-  return (
-    <div
-      style={{
-        background: "white",
-        border: "1px solid rgba(15,23,42,0.08)",
-        borderRadius: 14,
-        padding: 18,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div
-          style={{
-            background: "rgba(15,23,42,0.06)",
-            borderRadius: 10,
-            padding: 10,
-          }}
-        >
-          {icon}
-        </div>
-        <strong style={{ fontSize: 16 }}>{title}</strong>
+        ))}
       </div>
-      <p style={{ margin: "10px 0 0", fontSize: 14.5, lineHeight: 1.6 }}>{body}</p>
+    </section>
+  );
+}
+
+/* ---------- Security ---------- */
+function Security() {
+  const bullets = [
+    "Data stays in your control (on-prem/VPC)",
+    "Row-level permissions & redaction",
+    "SSO/SAML + SCIM provisioning",
+    "Audit logs & retention policies",
+  ];
+  return (
+    <section id="security" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <h2 className={`text-xl font-bold ${ACCENT.text}`}>Security by design</h2>
+            <p className="mt-2 text-sm text-zinc-900/90 max-w-2xl">
+              Enterprise controls without the enterprise headache. We designed Recallio for
+              security-first teams handling sensitive IP. Our SOC 2 program is underway (Type I
+              planned); please contact sales for details.
+            </p>
+          </div>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full md:w-auto">
+            {bullets.map((b) => (
+              <li key={b} className="flex items-center gap-2 text-sm text-zinc-900/90">
+                <CheckCircle2 className={`${ACCENT.text} h-4 w-4`} /> {b}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- CTA ---------- */
+function CTA() {
+  return (
+    <section id="cta" className="mx-auto max-w-7xl px-6 py-20">
+      <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm text-center">
+        <h2 className={`text-2xl font-bold text-zinc-900`}>See Recallio in your environment</h2>
+        <p className="mt-2 text-sm text-zinc-900/90">15-minute discovery • tailored demo • security brief</p>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href={LINKS.demo}
+            target="_blank"
+            rel="noopener"
+            className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r ${ACCENT.gradient} shadow-sm transition hover:opacity-95`}
+            onClick={track("demo_click_cta")}
+          >
+            Book a Demo
+          </a>
+          <a
+            href={LINKS.onePager}
+            className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-900 ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition"
+            onClick={track("onepager_download")}
+          >
+            Download One-Pager
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Footer ---------- */
+function Footer() {
+  return (
+    <footer className="border-t border-zinc-100">
+      <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <img src="/Recallio.svg" alt="Recallio" className="h-6 w-auto" />
+          <span className="text-sm font-semibold text-zinc-900">Recallio</span>
+        </div>
+        <div className="text-xs text-zinc-600">
+          © {new Date().getFullYear()} Recallio, Inc. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ---------- Page ---------- */
+export default function RecallioLandingEnterprise() {
+  return (
+    <div className="min-h-screen bg-white text-zinc-900">
+      <Header />
+      <Hero />
+      <Features />
+      <WorkflowSection />
+      <Integrations />
+      <Security />
+      <CTA />
+      <Footer />
     </div>
   );
 }

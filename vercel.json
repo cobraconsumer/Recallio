@@ -2,7 +2,10 @@
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/contact", "destination": "/contact.html" }
+    { "source": "/contact", "destination": "/contact.html" },
+
+    /* Catch-all for React Router (must be last) */
+    { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
     {

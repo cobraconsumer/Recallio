@@ -2,34 +2,61 @@
 
 /* ---------------- Env + App bootstrap ---------------- */
 const path = require('path');
-// Always load env from server/.env regardless of where node starts
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
 const session = require('cookie-session');
+const cookieParser = require('cookie-parser');
 const axios = require('axios');
+const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 app.set('trust proxy', 1); // behind proxies
 
-const PORT = Number(process.env.PORT || 3001);              // default 3001 for local
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;        // e.g. http://localhost:5173
-const BASE_URL = process.env.BASE_URL;                      // e.g. http://localhost:3001
+/* ---------------- Config ---------------- */
+const PORT = Number(process.env.PORT || 3001);
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;      // e.g. http://localhost:5173 or https://recallio.dev
+const BASE_URL = process.env.BASE_URL;                    // e.g. http://localhost:3001 or https://api.example.com
 
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+/* ---------------- Middleware ---------------- */
+app.use(cookieParser());
+app.use(cors({
+  origin: FRONTEND_ORIGIN, // if you need multiple, swap to a function and allow an array
+  credentials: true
+}));
 app.use(express.json());
 app.use(session({
   name: 'recallio_sess',
   secret: process.env.SESSION_SECRET || 'dev_secret_change_me',
   httpOnly: true,
   sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production' // http OK on localhost, HTTPS only in prod
+  secure: process.env.NODE_ENV === 'production' // HTTPS-only cookie in prod
 }));
 
+/* ---------------- Session helper ---------------- */
+function ensureSession(req) {
+  if (!req.session) req.session = {};
+  if (!req.session.providers) req.session.providers = {};
+  if (!req.session.profile) req.session.profile = {}; // { email, name, picture }
+  return req.session;
+}
 
-/* ---------------- Basic health + debug ---------------- */
+/* ---------------- Optional: OAuth state (CSRF) helpers ---------------- */
+function setStateCookie(res, val) {
+  res.cookie('oauth_state', val, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  });
+}
+function getStateCookie(req) {
+  return req.cookies?.oauth_state;
+}
+
+/* ---------------- Health + debug ---------------- */
 app.get('/health', (_req, res) => res.json({ ok: true, port: PORT }));
 
 app.get('/api/debug/google', (_req, res) => {
@@ -44,23 +71,30 @@ app.get('/api/debug/google', (_req, res) => {
   });
 });
 
-/* ---------------- Slack OAuth ---------------- */
+/* =======================================================================
+   SLACK OAUTH
+======================================================================= */
 const SLACK_AUTHORIZE = 'https://slack.com/oauth/v2/authorize';
 const SLACK_TOKEN_URL = 'https://slack.com/api/oauth.v2.access';
 const SLACK_SCOPES = ['identity.basic', 'identity.email', 'identity.avatar'].join(' ');
 
 app.get('/api/auth/slack', (_req, res) => {
+  const state = crypto.randomBytes(16).toString('hex');
+  setStateCookie(res, state);
+
   const params = new URLSearchParams({
     client_id: process.env.SLACK_CLIENT_ID,
     scope: SLACK_SCOPES,
-    redirect_uri: `${BASE_URL}/api/auth/slack/callback`
+    redirect_uri: `${BASE_URL}/api/auth/slack/callback`,
+    state
   });
   res.redirect(`${SLACK_AUTHORIZE}?${params.toString()}`);
 });
 
 app.get('/api/auth/slack/callback', async (req, res) => {
-  const { code } = req.query;
+  const { code, state } = req.query;
   if (!code) return res.status(400).send('Missing code');
+  if (!state || state !== getStateCookie(req)) return res.status(400).send('Invalid state');
 
   try {
     const tokenRes = await axios.post(
@@ -75,23 +109,33 @@ app.get('/api/auth/slack/callback', async (req, res) => {
     );
 
     const data = tokenRes.data;
-    if (!data.ok) return res.status(400).json({ error: 'Slack token exchange failed', details: data });
+    if (!data.ok) {
+      return res.status(400).json({ error: 'Slack token exchange failed', details: data });
+    }
 
+    const s = ensureSession(req);
     const authed = data.authed_user || {};
-    req.session.user = {
-      provider: 'slack',
+
+    s.providers.slack = {
       user_id: authed.id,
-      access_token: authed.access_token
+      access_token: authed.access_token,
+      email: data?.user?.email || null // not always present with identity scopes
     };
 
-    res.redirect(`${FRONTEND_ORIGIN}/auth/success?provider=slack`);
+    if (!s.profile.email && s.providers.slack.email) {
+      s.profile.email = s.providers.slack.email;
+    }
+
+    res.redirect(`${FRONTEND_ORIGIN}/auth/success?provider=slack&next=/settings/connections`);
   } catch (err) {
     console.error('Slack callback error:', err?.response?.data || err);
     res.redirect(`${FRONTEND_ORIGIN}/auth/error?provider=slack`);
   }
 });
 
-/* ---------------- Google / Gmail OAuth ---------------- */
+/* =======================================================================
+   GOOGLE / GMAIL OAUTH
+======================================================================= */
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GMAIL_PROFILE_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/profile';
@@ -103,10 +147,10 @@ const GOOGLE_SCOPES = {
 
 const oauth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// demo token store (replace with DB for production)
+// Demo token store (replace with DB in production)
 const tokenStore = new Map(); // key: sub, value: { refresh_token, access_token, expiry }
 
-function buildGoogleAuthURL(scopes) {
+function buildGoogleAuthURL(scopes, state) {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
     redirect_uri: `${BASE_URL}/api/auth/gmail/callback`,
@@ -114,24 +158,30 @@ function buildGoogleAuthURL(scopes) {
     scope: scopes.join(' '),
     access_type: 'offline',
     include_granted_scopes: 'true',
-    prompt: 'consent'
+    prompt: 'consent',
+    state
   });
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
 
 // Identity only
 app.get('/api/auth/gmail', (_req, res) => {
-  res.redirect(buildGoogleAuthURL(GOOGLE_SCOPES.basic));
+  const state = crypto.randomBytes(16).toString('hex');
+  setStateCookie(res, state);
+  res.redirect(buildGoogleAuthURL(GOOGLE_SCOPES.basic, state));
 });
 
 // Ask for Gmail readonly
 app.get('/api/auth/gmail/connect', (_req, res) => {
-  res.redirect(buildGoogleAuthURL(GOOGLE_SCOPES.gmail));
+  const state = crypto.randomBytes(16).toString('hex');
+  setStateCookie(res, state);
+  res.redirect(buildGoogleAuthURL(GOOGLE_SCOPES.gmail, state));
 });
 
 app.get('/api/auth/gmail/callback', async (req, res) => {
-  const { code } = req.query;
+  const { code, state } = req.query;
   if (!code) return res.status(400).send('Missing code');
+  if (!state || state !== getStateCookie(req)) return res.status(400).send('Invalid state');
 
   try {
     const body = new URLSearchParams({
@@ -148,6 +198,7 @@ app.get('/api/auth/gmail/callback', async (req, res) => {
 
     const { id_token, access_token, refresh_token, expires_in, scope } = tokenRes.data || {};
 
+    // Verify ID token
     const ticket = await oauth2Client.verifyIdToken({
       idToken: id_token,
       audience: process.env.GOOGLE_CLIENT_ID
@@ -155,24 +206,32 @@ app.get('/api/auth/gmail/callback', async (req, res) => {
     const payload = ticket.getPayload() || {};
     const sub = payload.sub;
 
-    req.session.user = {
-      provider: 'google',
+    const s = ensureSession(req);
+    // profile
+    s.profile.email   = payload.email   || s.profile.email;
+    s.profile.name    = payload.name    || s.profile.name;
+    s.profile.picture = payload.picture || s.profile.picture;
+
+    const hasGmail = !!(scope && scope.includes('gmail'));
+
+    // provider map
+    s.providers.google = {
       sub,
-      email: payload.email,
-      name: payload.name,
-      picture: payload.picture,
-      has_gmail_scope: !!(scope && scope.includes('gmail'))
+      connected: true,
+      has_gmail_scope: hasGmail
     };
 
+    // token store (demo)
     const expiry = Date.now() + (Number(expires_in || 0) * 1000) - 30000;
+    const prev = tokenStore.get(sub) || {};
     tokenStore.set(sub, {
-      refresh_token: refresh_token || tokenStore.get(sub)?.refresh_token,
+      refresh_token: refresh_token || prev.refresh_token,
       access_token,
       expiry
     });
 
-    const gmailParam = (scope && scope.includes('gmail')) ? '&gmail=1' : '';
-    res.redirect(`${FRONTEND_ORIGIN}/auth/success?provider=google${gmailParam}`);
+    const gmailParam = hasGmail ? '&gmail=1' : '';
+    res.redirect(`${FRONTEND_ORIGIN}/auth/success?provider=google${gmailParam}&next=/settings/connections`);
   } catch (err) {
     console.error('Google callback error:', err?.response?.data || err);
     res.redirect(`${FRONTEND_ORIGIN}/auth/error?provider=google`);
@@ -205,10 +264,11 @@ async function ensureGoogleAccessToken(sub) {
 
 app.get('/api/gmail/profile', async (req, res) => {
   try {
-    if (!req.session.user || req.session.user.provider !== 'google') {
+    const s = ensureSession(req);
+    if (!s.providers.google?.sub) {
       return res.status(401).json({ error: 'Not signed in with Google' });
     }
-    const token = await ensureGoogleAccessToken(req.session.user.sub);
+    const token = await ensureGoogleAccessToken(s.providers.google.sub);
     const resp = await axios.get(GMAIL_PROFILE_URL, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -219,9 +279,26 @@ app.get('/api/gmail/profile', async (req, res) => {
   }
 });
 
-/* ---------------- Session helpers ---------------- */
+/* =======================================================================
+   SESSION / ME
+======================================================================= */
 app.get('/api/auth/status', (req, res) => {
-  res.json({ authenticated: !!req.session.user, user: req.session.user || null });
+  const s = ensureSession(req);
+  const primary =
+    s.providers.google ? { provider: 'google', email: s.profile.email } :
+    s.providers.slack  ? { provider: 'slack',  email: s.providers.slack.email } :
+    s.providers.zoom   ? { provider: 'zoom',   email: s.providers.zoom.email } :
+    null;
+
+  res.json({ authenticated: !!primary, user: primary });
+});
+
+app.get('/api/me', (req, res) => {
+  const s = ensureSession(req);
+  res.json({
+    profile: s.profile,       // { email, name, picture }
+    providers: s.providers    // { google: {...}, slack: {...}, zoom: {...} }
+  });
 });
 
 app.post('/api/auth/logout', (req, res) => {
