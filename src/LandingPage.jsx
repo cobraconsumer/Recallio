@@ -1,6 +1,7 @@
 // src/LandingPage.jsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import WorksWithStack from "./components/WorksWithStack";
 
 /* ---- assets served from /public ---- */
 const LOGO_SRC = "/Recallio.svg";        // ensure public/Recallio.svg exists
@@ -253,6 +254,8 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      <WorksWithStack />
 
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-6xl px-4 py-16">
