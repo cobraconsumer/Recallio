@@ -306,6 +306,55 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+/* =======================================================================
+   ASK (demo) + ACTIONS (demo)
+======================================================================= */
+
+// Simple “ask” endpoint that returns a structured, mock answer
+app.post('/api/ask', (req, res) => {
+  const s = ensureSession(req);
+  const q = (req.body?.query || '').trim();
+  if (!q) return res.status(400).json({ error: 'Missing query' });
+
+  const answer = {
+    query: q,
+    summary:
+      "Three decisions: (1) Type ramp 12/16/20/28. (2) Accent = Indigo 600. (3) Standardized micro-interactions across buttons. Owners: Maya (Design), Leo (FE), Priya (PM).",
+    pills: ["Typography", "Color", "Motion"],
+    citations: [
+      { kind: "Figma",  title: "Design Review 10/12", url: "https://figma.com/file/abc" },
+      { kind: "GDrive", title: "PRD v3",              url: "https://drive.google.com/file/xyz" },
+      { kind: "Meet",   title: "Transcript 10/11",    url: "https://meet.google.com/..." }
+    ],
+    owners: [
+      { name: "Maya",  role: "Design" },
+      { name: "Leo",   role: "Frontend" },
+      { name: "Priya", role: "PM" }
+    ]
+  };
+
+  res.json({ ok: true, answer });
+});
+
+// “Actions” that a UI button can call (mocked for now)
+app.post('/api/actions/add_to_calendar', (req, res) => {
+  const { title = "Design review recap", when = "Fri 10:00" } = req.body || {};
+  res.json({ ok: true, actionId: `cal-${Date.now()}`, title, when });
+});
+
+app.post('/api/actions/schedule_zoom', (_req, res) => {
+  res.json({ ok: true, actionId: `zoom-${Date.now()}` });
+});
+
+app.post('/api/actions/draft_followup', (_req, res) => {
+  res.json({
+    ok: true,
+    draft:
+      "Hi team — quick recap of decisions: 1) type ramp 12/16/20/28, 2) accent Indigo 600, 3) standardized micro-interactions. Links attached."
+  });
+});
+
+
 /* ---------------- Start server ---------------- */
 app.listen(PORT, () => {
   console.log(`Auth server on :${PORT}`);
